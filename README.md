@@ -171,3 +171,9 @@ MAX_MEMORY_TOKENS=6000
 
 **TODO'ish:** Add Ollama as local option, both for embeddings and for the llm/chat -- this would allow running the app without *any* external runtime dependencies. *This will probably first appear in the containerized -branch.* 
 
+## What else is there
+
+PostgreSQL is pretty great, but the vanilla version lacks most of the typical features needed in LLM related applications. Fortunately, as this and many other projects have demonstrated, PG is highly extensible. PG has support for vector extensions (pgvector), lexical and hybrid search (pg_search, pg_textsearch), scheduled jobs (pg_cron), Graphs and Cypher (pgage), embeddings and even direct llm calls from within the database (pgai). If you like Postgres as much as I do, and want to inlclude it in your future AI projects,  checkout:
+  - https://hub.docker.com/repository/docker/reinikp2/pgvector-database/general
+  - https://hub.docker.com/repository/docker/reinikp2/hybrid-postgres/general
+  - https://hub.docker.com/repository/docker/reinikp2/ai-postgres/general
