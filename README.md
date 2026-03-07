@@ -10,23 +10,6 @@ Two dedicated apps: a loader that chunks/passes PDFs into knowledge base (hybrid
 
 **QueryBooks** is now available as docker-compose-only project in `containerized` -branch. The main branch will not migrate to containers, and both GUI's and the bulk loading pipeline remain runnable on local machines. That being said, also the containerized version can be run locally, but the branch doesn't include separate instructions for setting the environment variables to that end (including both options would needlessly complicate the env management).
 
-## Web UIs
-
-* **Loader (`app_loader.py`)** – Gradio UI mirroring `pipeline.py`’s options. Upload or point to a PDF, select mini/small/medium, tweak chunking/provider overrides, and truncate/dry-run before writing. Launch with `uv run app_loader.py`; set `PROFILE` before launching if you want a different default target table (`md` is the default profile, so the loader starts on medium unless you override it). The medium step now defaults to OpenAI embeddings (`MEDIUM_PROVIDER=openai`), which means the loader expects `OPENAI_API_KEY` to be set; switching to Azure requires explicitly changing the dropdown or passing `--medium-provider azure` along with the Azure endpoint/key.
-* **Chat (`app_query.py`)** – Tool-enabled assistant that queries the populated tables. It checks `PROFILE` (`mini`, `sm`, or `md`, default `md`) to decide which table/embedding pair to hit and reads the corresponding embedding model from `DEPLOY_MINI`, `DEPLOY_SMALL`, or `DEPLOY_MEDIUM`. The medium profile still uses whatever model is configured in `DEPLOY_MEDIUM`, so it will match the loader’s provider configuration (OpenAI by default). Run `uv run app_query.py` after loading data. To launch the UI with a specific profile, prefix the command with `PROFILE=mini uv run ...` (or `sm`/`md`).
-
-All three target tables can coexist—use `mini`, `sm`, or `md` depending on your experimentation goals. You can populate just one table at a time (for example, only `mini` with a local sentence-transformer) or fill them all; they don’t share configuration beyond the shared `MEDIUM_PROVIDER`/`DEPLOY_*` env vars, so you only need to set the values that matter for the table(s) you plan to use.
-
-Both UIs and the CLI share the same env-loading order: `project.env`, `.env`, then `--env-file` (pipeline default is `.env`).
-
-## Local data population (single command)
-
-```bash
-uv run pipeline.py
-```
-
-That run truncates `knowledge_base_mini`, `knowledge_base_sm`, and `knowledge_base_md` (unless you set `--skip-empty`) and populates the mini/small tables by default. The medium step no longer insists on Azure; it honors `MEDIUM_PROVIDER` (default `openai`) so you only need Azure creds if you select `azure` explicitly.
-
 ## Prerequisites
 
 Start the local DB/migrations:
@@ -41,6 +24,34 @@ Install dependencies (one-time):
 ```bash
 uv sync
 ```
+
+## Local data population (single command)
+
+```bash
+uv run pipeline.py
+```
+
+That run truncates `knowledge_base_mini`, `knowledge_base_sm`, and `knowledge_base_md` (unless you set `--skip-empty`) and populates the mini/small tables by default. The medium step no longer insists on Azure; it honors `MEDIUM_PROVIDER` (default `openai`) so you only need Azure creds if you select `azure` explicitly.
+
+## Run the Web UI's 
+
+To load books into the database using a a gradio app (alternative to `pipeline.py`):
+```bash
+uv run app_loader.py
+```
+To launch a gradio chat app with access to the database (through various retrieval tools):
+```bash
+uv run app_query.py
+```
+
+### The Web UIs
+
+* **Loader (`app_loader.py`)** – Gradio UI mirroring `pipeline.py`’s options. Upload or point to a PDF, select mini/small/medium, tweak chunking/provider overrides, and truncate/dry-run before writing. Launch with `uv run app_loader.py`; set `PROFILE` before launching if you want a different default target table (`md` is the default profile, so the loader starts on medium unless you override it). The medium step now defaults to OpenAI embeddings (`MEDIUM_PROVIDER=openai`), which means the loader expects `OPENAI_API_KEY` to be set; switching to Azure requires explicitly changing the dropdown or passing `--medium-provider azure` along with the Azure endpoint/key.
+* **Chat (`app_query.py`)** – Tool-enabled assistant that queries the populated tables. It checks `PROFILE` (`mini`, `sm`, or `md`, default `md`) to decide which table/embedding pair to hit and reads the corresponding embedding model from `DEPLOY_MINI`, `DEPLOY_SMALL`, or `DEPLOY_MEDIUM`. The medium profile still uses whatever model is configured in `DEPLOY_MEDIUM`, so it will match the loader’s provider configuration (OpenAI by default). Run `uv run app_query.py` after loading data. To launch the UI with a specific profile, prefix the command with `PROFILE=mini uv run ...` (or `sm`/`md`).
+
+All three target tables can coexist—use `mini`, `sm`, or `md` depending on your experimentation goals. You can populate just one table at a time (for example, only `mini` with a local sentence-transformer) or fill them all; they don’t share configuration beyond the shared `MEDIUM_PROVIDER`/`DEPLOY_*` env vars, so you only need to set the values that matter for the table(s) you plan to use.
+
+Both UIs and the CLI share the same env-loading order: `project.env`, `.env`, then `--env-file` (pipeline default is `.env`). Both `project.env` and `.env` are necessary (former is for containers, and you do not need to edit it), the latter you will need to create yourself -- keep reading for instructions. 
 
 ## Technical stack
 
