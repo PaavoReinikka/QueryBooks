@@ -6,6 +6,10 @@
 
 Two dedicated apps: a loader that chunks/passes PDFs into knowledge base (hybrid postgres) and a chat/query surface that retrieves context from the populated tables, and answers user's questions based on the source material.
 
+## News
+
+**QueryBooks** is now available as docker-compose-only project in `containerized` -branch. The main branch will not migrate to containers, and both GUI's and the bulk loading pipeline remain runnable on local machines. That being said, also the containerized version can be run locally, but the branch doesn't include separate instructions for setting the environment variables to that end (including both options would needlessly complicate the env management).
+
 ## Web UIs
 
 * **Loader (`app_loader.py`)** – Gradio UI mirroring `pipeline.py`’s options. Upload or point to a PDF, select mini/small/medium, tweak chunking/provider overrides, and truncate/dry-run before writing. Launch with `uv run app_loader.py`; set `PROFILE` before launching if you want a different default target table (`md` is the default profile, so the loader starts on medium unless you override it). The medium step now defaults to OpenAI embeddings (`MEDIUM_PROVIDER=openai`), which means the loader expects `OPENAI_API_KEY` to be set; switching to Azure requires explicitly changing the dropdown or passing `--medium-provider azure` along with the Azure endpoint/key.
@@ -158,4 +162,12 @@ MAX_MEMORY_TOKENS=6000
 
 ## (Near) Future changes
 
-At the moment, only the database is running in a container. This will change in the near future, and both the loader and the query ends will be running in a dedicated containers. This simplifies both local use and possible cloud deployments.
+**TODO:** Migrate to psycopg V3 (already added to env). Files affected:
+- utils/retrieval_functions.py – still imports `psycopg2` and references `psycopg2.extensions`.
+- tests/test_hybrid_search_db.py – uses `psycopg2.connect` for the integration test.
+- scripts/preprocess.py – registers pgvector via `pgvector.psycopg2` and uses `psycopg2.extras.execute_values`.
+- apps/loader/pipeline.py – opens Postgres using `psycopg2.connect`.
+- remote/populate_remote.py – also runs `psycopg2.connect`.
+
+**TODO'ish:** Add Ollama as local option, both for embeddings and for the llm/chat -- this would allow running the app without *any* external runtime dependencies. *This will probably first appear in the containerized -branch.* 
+
