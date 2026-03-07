@@ -11,6 +11,8 @@ Two dedicated apps: a loader that chunks/passes PDFs into knowledge base (hybrid
 * **Loader (`app_loader.py`)** – Gradio UI mirroring `pipeline.py`’s options. Upload or point to a PDF, select mini/small/medium, tweak chunking/provider overrides, and truncate/dry-run before writing. Launch with `uv run app_loader.py`; set `PROFILE` before launching if you want a different default target table (`md` is the default profile, so the loader starts on medium unless you override it). The medium step now defaults to OpenAI embeddings (`MEDIUM_PROVIDER=openai`), which means the loader expects `OPENAI_API_KEY` to be set; switching to Azure requires explicitly changing the dropdown or passing `--medium-provider azure` along with the Azure endpoint/key.
 * **Chat (`app_query.py`)** – Tool-enabled assistant that queries the populated tables. It checks `PROFILE` (`mini`, `sm`, or `md`, default `md`) to decide which table/embedding pair to hit and reads the corresponding embedding model from `DEPLOY_MINI`, `DEPLOY_SMALL`, or `DEPLOY_MEDIUM`. The medium profile still uses whatever model is configured in `DEPLOY_MEDIUM`, so it will match the loader’s provider configuration (OpenAI by default). Run `uv run app_query.py` after loading data. To launch the UI with a specific profile, prefix the command with `PROFILE=mini uv run ...` (or `sm`/`md`).
 
+All three target tables can coexist—use `mini`, `sm`, or `md` depending on your experimentation goals. You can populate just one table at a time (for example, only `mini` with a local sentence-transformer) or fill them all; they don’t share configuration beyond the shared `MEDIUM_PROVIDER`/`DEPLOY_*` env vars, so you only need to set the values that matter for the table(s) you plan to use.
+
 Both UIs and the CLI share the same env-loading order: `project.env`, `.env`, then `--env-file` (pipeline default is `.env`).
 
 ## Local data population (single command)
@@ -82,7 +84,7 @@ PGSSLMODE=disable
 
 ### Chunking and preprocessing defaults
 
-Embedding model is needed for semantic chunking. Small local (HF) models are usually sufficient for this. If for some reason you want to use API's, only azure endpoints are supported at the moment -- you need to modify the `preprocess.py` script yourself for other options -- yes, this is inconsistant with the way the query end is working (defaulting to openai for API's). This might change in the future to support opeanai as the primary API.
+Embedding model is needed for semantic chunking. The loader UI currently exposes only the local provider so the options below describe that path; Azure chunking/deployments are available only when you run the CLI (`uv run pipeline.py` or `python scripts/preprocess.py`) and explicitly request `--medium-provider azure` (or set `MEDIUM_PROVIDER=azure`).
 
 ```env
 PDF_PATH=data/euaiact.pdf
@@ -94,12 +96,16 @@ MAX_SENTENCES=5
 
 CHUNKING_PROVIDER=local
 CHUNKING_LOCAL_MODEL=sentence-transformers/all-MiniLM-L6-v2
-CHUNKING_DEPLOYMENT= #only if provider azure 
+CHUNKING_DEPLOYMENT= # only used when running the CLI with `CHUNKING_PROVIDER=azure`
 BREAKPOINT_THRESHOLD_TYPE=percentile
 
 MAX_EMBED_TOKENS=2000
 SPLIT_OVERLAP_TOKENS=80
 ```
+
+### spaCy models
+
+The loader relies on spaCy models being installed in the Python environment. The default `en-core-web-sm` wheel is already pinned in `pyproject.toml` so it is available after running `uv sync`. If you want to use another spaCy model, add the corresponding wheel URL to `pyproject.toml` (for example `en-core-web-trf @ https://...`) and rerun `uv sync` so the virtualenv contains the weights. As a shortcut you can also install a model temporarily via `uv run pip install <name>` or `python -m spacy download <name>`, but updating `pyproject.toml` plus `uv sync` keeps version management consistent with the rest of the project.
 
 ### Defaul openai endpoint
 
@@ -108,9 +114,17 @@ For openai endpoints (medium profiles default behavious), you need to provide th
 OPENAI_API_KEY=sk-<your-openai-key>
 ```
 
-### Azure embedding overrides *(optional for medium when `MEDIUM_PROVIDER=azure`)*
+### OpenAI model overrides
 
-If you have access to azure api's (e.g., foundry deployments), you can specify that you wish to use azure by passing the provider when launcing the apps, or by setting it in the env. Then you need to also set the following vars:
+Use these to choose which OpenAI chat/ reranking models power the query UI:
+```env
+OPENAI_CHAT_MODEL=gpt-4.1-mini
+OPENAI_RERANK_MODEL=gpt-4o-mini
+```
+
+### Azure embedding overrides *(CLI only)*
+
+The Gradio loader/query UIs always default to OpenAI for the medium profile. Azure embeddings are still supported when you run the CLI (`uv run pipeline.py` or `python scripts/preprocess.py`) and explicitly pass `--medium-provider azure` (or set `MEDIUM_PROVIDER=azure` in the `.env`). That flow also requires the Azure endpoint/deployment values below; use it only if you know how to configure your Azure deployments and Postgres endpoint.
 
 ```env
 AZURE_ENDPOINT=...
@@ -118,6 +132,8 @@ AZURE_API_KEY=...
 DEPLOY_MEDIUM=...
 AZURE_API_VERSION=2025-03-01-preview
 ```
+
+**NOTE:** The use of Azure embeddings is discouraged at the moment. It is still possible to use azure embeddings if you, for example, want to use Azure Flex server database and bulk load it using `pipeline.py`. However, the query -end can only use either local embedding or opeanai embedding models. Adding full support for Foundry deployments is not at the top of the todo-list, but might happen at a later date.
 
 ### Embedding profile hints
 

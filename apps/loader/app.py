@@ -39,10 +39,21 @@ DEFAULT_MAX_SENTENCES = _int_env("MAX_SENTENCES", 5)
 DEFAULT_SPACY_MODEL = os.getenv("SPACY_MODEL", "en_core_web_sm")
 DEFAULT_MAX_EMBED_TOKENS = _int_env("MAX_EMBED_TOKENS", 2000)
 DEFAULT_SPLIT_OVERLAP_TOKENS = _int_env("SPLIT_OVERLAP_TOKENS", 80)
-DEFAULT_AZURE_DEPLOYMENT = os.getenv("DEPLOY_MEDIUM", "")
-DEFAULT_AZURE_ENDPOINT = os.getenv("AZURE_ENDPOINT", "")
-DEFAULT_AZURE_API_KEY = os.getenv("AZURE_API_KEY", "")
-DEFAULT_MEDIUM_PROVIDER = os.getenv("MEDIUM_PROVIDER", "openai")
+
+
+def _installed_spacy_models() -> list[str]:
+    try:
+        from spacy.util import get_installed_models
+    except ImportError:
+        return [DEFAULT_SPACY_MODEL]
+
+    models = sorted(get_installed_models())
+    if DEFAULT_SPACY_MODEL not in models:
+        models.insert(0, DEFAULT_SPACY_MODEL)
+    return models or [DEFAULT_SPACY_MODEL]
+
+
+DEFAULT_SPACY_CHOICES = _installed_spacy_models()
 
 
 def _build_loader_args(
@@ -50,18 +61,12 @@ def _build_loader_args(
     source: str | None,
     table_choice: str,
     chunker: str | None,
-    chunking_provider: str | None,
     chunking_local_model: str | None,
-    chunking_deployment: str | None,
     max_sentences: int | None,
     spacy_model: str | None,
     breakpoint_threshold: str | None,
     max_embed_tokens: int | None,
     split_overlap_tokens: int | None,
-    azure_deployment: str | None,
-    azure_endpoint: str | None,
-    azure_api_key: str | None,
-    medium_provider: str | None,
     truncate: bool,
     dry_run: bool,
 ) -> SimpleNamespace:
@@ -70,21 +75,14 @@ def _build_loader_args(
         pdf_path=pdf_path,
         source=source or None,
         chunker=chunker,
-        chunking_provider=chunking_provider,
+        chunking_provider=DEFAULT_CHUNKING_PROVIDER,
         chunking_local_model=chunking_local_model,
-        chunking_deployment=chunking_deployment,
+        chunking_deployment=DEFAULT_CHUNKING_DEPLOYMENT,
         max_sentences=max_sentences,
         spacy_model=spacy_model,
         breakpoint_threshold=breakpoint_threshold,
         max_embed_tokens=max_embed_tokens,
         split_overlap_tokens=split_overlap_tokens,
-        azure_deployment=azure_deployment,
-        azure_endpoint=azure_endpoint,
-        azure_api_key=azure_api_key,
-        medium_provider=medium_provider.lower() if medium_provider else None,
-        openai_api_key=None,
-        mini=table_choice == "mini",
-        small=table_choice == "small",
         medium=table_choice == "medium",
         truncate=truncate,
         dry_run=dry_run,
@@ -97,18 +95,12 @@ def run_loader(
     source,
     table_choice,
     chunker,
-    chunking_provider,
     chunking_local_model,
-    chunking_deployment,
     max_sentences,
     spacy_model,
     breakpoint_threshold,
     max_embed_tokens,
     split_overlap_tokens,
-    azure_deployment,
-    azure_endpoint,
-    azure_api_key,
-    medium_provider,
     truncate,
     dry_run,
 ) -> str:
@@ -121,18 +113,12 @@ def run_loader(
         source=source or None,
         table_choice=table_choice,
         chunker=chunker if chunker else None,
-        chunking_provider=chunking_provider if chunking_provider else None,
         chunking_local_model=chunking_local_model or None,
-        chunking_deployment=chunking_deployment or None,
         max_sentences=int(max_sentences) if max_sentences else None,
         spacy_model=spacy_model or None,
         breakpoint_threshold=breakpoint_threshold or None,
         max_embed_tokens=int(max_embed_tokens) if max_embed_tokens else None,
         split_overlap_tokens=int(split_overlap_tokens) if split_overlap_tokens else None,
-        azure_deployment=azure_deployment or None,
-        azure_endpoint=azure_endpoint or None,
-        azure_api_key=azure_api_key or None,
-        medium_provider=medium_provider or None,
         truncate=truncate,
         dry_run=dry_run,
     )
@@ -188,18 +174,9 @@ with gr.Blocks(title="Knowledge Base Loader") as loader_app:
             label="Chunker",
             value=DEFAULT_CHUNKER,
         )
-        chunking_provider_dropdown = gr.Dropdown(
-            ["local", "azure"],
-            label="Chunking provider",
-            value=DEFAULT_CHUNKING_PROVIDER,
-        )
         chunking_local_model_text = gr.Textbox(
             label="Local model for semantic chunking",
             value=DEFAULT_CHUNKING_LOCAL_MODEL,
-        )
-        chunking_deployment_text = gr.Textbox(
-            label="Azure deployment for chunking",
-            value=DEFAULT_CHUNKING_DEPLOYMENT,
         )
         max_sentences_slider = gr.Slider(
             1,
@@ -208,7 +185,12 @@ with gr.Blocks(title="Knowledge Base Loader") as loader_app:
             step=1,
             label="Max sentences per chunk",
         )
-        spacy_model_text = gr.Textbox(label="spaCy model", value=DEFAULT_SPACY_MODEL)
+        spacy_model_dropdown = gr.Dropdown(
+            choices=DEFAULT_SPACY_CHOICES,
+            label="spaCy model",
+            value=DEFAULT_SPACY_MODEL,
+            info="Shows only models spaCy already sees in this environment",
+        )
         breakpoint_dropdown = gr.Dropdown(
             ["percentile", "standard_deviation", "interquartile"],
             label="Breakpoint threshold type",
@@ -216,25 +198,14 @@ with gr.Blocks(title="Knowledge Base Loader") as loader_app:
         )
         max_embed_tokens_input = gr.Number(
             value=DEFAULT_MAX_EMBED_TOKENS,
-            label="Max embed tokens (Azure)",
+            label="Max embed tokens",
             precision=0,
         )
         split_overlap_input = gr.Number(
             value=DEFAULT_SPLIT_OVERLAP_TOKENS,
-            label="Split overlap tokens (Azure)",
+            label="Split overlap tokens",
             precision=0,
         )
-
-    with gr.Accordion("Medium embedding overrides", open=False):
-        medium_provider_dropdown = gr.Dropdown(
-            ["openai", "azure"],
-            label="Medium embedding provider",
-            value=DEFAULT_MEDIUM_PROVIDER,
-            info="Choose Azure only if you have the endpoint and API key configured; otherwise OpenAI will be used.",
-        )
-        azure_deployment_text = gr.Textbox(label="Azure deployment", value=DEFAULT_AZURE_DEPLOYMENT)
-        azure_endpoint_text = gr.Textbox(label="Azure endpoint", value=DEFAULT_AZURE_ENDPOINT)
-        azure_api_key_text = gr.Textbox(label="Azure API key", value=DEFAULT_AZURE_API_KEY)
 
     run_button = gr.Button("Load document")
     status_output = gr.Textbox(label="Status")
@@ -247,22 +218,22 @@ with gr.Blocks(title="Knowledge Base Loader") as loader_app:
             source_text,
             table_radio,
             chunker_dropdown,
-            chunking_provider_dropdown,
             chunking_local_model_text,
-            chunking_deployment_text,
             max_sentences_slider,
-            spacy_model_text,
+            spacy_model_dropdown,
             breakpoint_dropdown,
             max_embed_tokens_input,
             split_overlap_input,
-            azure_deployment_text,
-            azure_endpoint_text,
-            azure_api_key_text,
-            medium_provider_dropdown,
             truncate_checkbox,
             dry_run_checkbox,
         ],
         outputs=status_output,
+    )
+
+    gr.Markdown(
+        """
+        **Azure embeddings are CLI-only.** If you need to load via Azure (for dedicated Azure-hosted databases), run `uv run pipeline.py` or the CLI with the Azure flags. The GUI always runs the medium profile via OpenAI so the experience stays simple.
+        """
     )
 
     with gr.Accordion("Inspect knowledge base", open=False):
