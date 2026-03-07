@@ -1,0 +1,37 @@
+services:
+  database:
+    container_name: books_database
+    image: reinikp2/hybrid-postgres #alt: postgres:17.0 + pgvector
+    restart: unless-stopped
+    ports:
+      - 5431:5432 # (check for conflicts wrt. host)
+    environment:
+      - TZ=Europe/Helsinki  # Set the timezone
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres -h localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  database-migrations:
+    image: flyway/flyway:10
+    environment:
+      - FLYWAY_USER=postgres
+      - FLYWAY_PASSWORD=password
+      - FLYWAY_URL=jdbc:postgresql://database:5432/postgres
+    depends_on:
+      database:
+        condition: service_started
+    volumes:
+      - ./database-migrations:/flyway/sql
+    command: -connectRetries=60 -baselineOnMigrate=true migrate
+
+volumes:
+  pgdata:
+      
+

@@ -4,8 +4,8 @@ pgdata/
 # Environment files
 .env
 .env.*
-*.env
-#project.env
+#allow project.env
+
 
 # Python virtual environments
 .venv/
