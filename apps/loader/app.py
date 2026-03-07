@@ -84,8 +84,15 @@ def _build_loader_args(
         max_embed_tokens=max_embed_tokens,
         split_overlap_tokens=split_overlap_tokens,
         medium=table_choice == "medium",
+        mini=table_choice == "mini",
+        small=table_choice == "small",
         truncate=truncate,
         dry_run=dry_run,
+        azure_deployment=os.getenv("DEPLOY_MEDIUM"),
+        azure_endpoint=os.getenv("AZURE_ENDPOINT"),
+        azure_api_key=os.getenv("AZURE_API_KEY"),
+        medium_provider=os.getenv("MEDIUM_PROVIDER"),
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
     )
 
 
@@ -250,7 +257,7 @@ with gr.Blocks(title="Knowledge Base Loader") as loader_app:
 
 
 def launch_loader() -> None:
-    loader_app.queue().launch(pwa=True)
+    loader_app.queue().launch(server_name="0.0.0.0", server_port=7860, pwa=True)
 
 
 if __name__ == "__main__":

@@ -23,6 +23,12 @@ uv run pipeline.py
 
 That run truncates `knowledge_base_mini`, `knowledge_base_sm`, and `knowledge_base_md` (unless you set `--skip-empty`) and populates the mini/small tables by default. The medium step no longer insists on Azure; it honors `MEDIUM_PROVIDER` (default `openai`) so you only need Azure creds if you select `azure` explicitly.
 
+## Containerized apps
+
+`compose.yaml` now includes dedicated loader and query services that build from `Dockerfile.loader` and `Dockerfile.query` (they install dependencies via `uv sync` and run the respective `uv run ...` entrypoints). They mount the repo so the UI code and env files stay in sync with your workspace and share the local Postgres service, so you can keep using `docker compose` for the database without change. The loader/query containers belong to the `ui` profile, so they only start when you explicitly request that profile (e.g., `docker compose --profile ui up loader query`). The profile declaration keeps the database/migrations stack unaffected while still allowing you to bring up both UIs together whenever you need them.
+
+To avoid re-downloading Hugging Face models every time, set the `HF_CACHE_PATH` environment variable in `.env` (for example `/home/<you>/.cache/huggingface` on Linux/macOS or `C:/Users/<you>/.cache/huggingface` on Windows). Compose mounts that path into each container at `/root/.cache/huggingface`, ensuring the same cache serves both services and any host process that shares the directory. Start the UIs with `docker compose up loader query` and open the loader (`localhost:7860`) or query (`localhost:7861`) in your browser.
+
 ## Prerequisites
 
 Start the local DB/migrations:

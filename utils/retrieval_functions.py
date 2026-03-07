@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass, asdict
 from typing import Any, Literal, Mapping, Sequence, Optional
 
+# NOTE: psycopg2 is used for compatibility with other projects
+# while psycopg (v3) should be preferred for new development when possible. 
 import psycopg2
 from psycopg2 import Error as PsycopgError, extensions, sql, errorcodes
 

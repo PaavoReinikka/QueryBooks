@@ -19,9 +19,14 @@ def env_or_default(name: str, default: str) -> str:
 
 
 def load_environment(env_file: str) -> None:
-    load_dotenv(ROOT / "project.env", override=False)
-    load_dotenv(ROOT / ".env", override=True)
-    load_dotenv(ROOT / env_file, override=True)
+    project_env = (ROOT / "project.env").resolve()
+    default_env = (ROOT / ".env").resolve()
+    load_dotenv(project_env, override=False)
+    load_dotenv(default_env, override=False)
+
+    requested_env = (ROOT / env_file).resolve()
+    if requested_env not in (project_env, default_env):
+        load_dotenv(requested_env, override=True)
 
 
 def build_preprocess_args(loader_args: SimpleNamespace) -> List[str]:

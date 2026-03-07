@@ -1,3 +1,5 @@
+x-hf-cache: &hf-cache '${HF_CACHE_PATH:-${HOME}/.cache/huggingface}:/root/.cache/huggingface:cached'
+
 services:
   database:
     container_name: books_database
@@ -31,7 +33,60 @@ services:
       - ./database-migrations:/flyway/sql
     command: -connectRetries=60 -baselineOnMigrate=true migrate
 
+  loader:
+    build:
+      context: .
+      dockerfile: apps/loader/Dockerfile
+    env_file:
+      - project.env
+      - .env
+    environment:
+      - PGHOST=database
+      - PGPORT=5432
+    volumes:
+      - ./apps:/workspace/apps:delegated
+      - ./utils:/workspace/utils:delegated
+      - ./scripts:/workspace/scripts:delegated
+      - ./data:/workspace/data:delegated
+      - ./app_loader.py:/workspace/app_loader.py:ro
+      - ./pipeline.py:/workspace/pipeline.py:ro
+      - *hf-cache
+      # uncomment the next line to mount the entire workspace (including your host .venv)
+      # - .:/workspace:delegated
+    ports:
+      - 7860:7860
+    depends_on:
+      - database
+    profiles:
+      - ui
+
+  query:
+    build:
+      context: .
+      dockerfile: apps/query/Dockerfile
+    env_file:
+      - project.env
+      - .env
+    environment:
+      - PGHOST=database
+      - PGPORT=5432
+    volumes:
+      - ./apps:/workspace/apps:delegated
+      - ./utils:/workspace/utils:delegated
+      - ./scripts:/workspace/scripts:delegated
+      - ./data:/workspace/data:delegated
+      - ./app_query.py:/workspace/app_query.py:ro
+      - ./pipeline.py:/workspace/pipeline.py:ro
+      - *hf-cache
+      # uncomment the next line to mount the entire workspace (including your host .venv)
+      # - .:/workspace:delegated
+    ports:
+      - 7861:7860
+    depends_on:
+      - database
+    profiles:
+      - ui
+
 volumes:
   pgdata:
-      
 
