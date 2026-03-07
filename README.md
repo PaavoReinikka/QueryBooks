@@ -134,3 +134,8 @@ Control how many tokens stay in memory during a conversation with `MAX_MEMORY_TO
 ```env
 MAX_MEMORY_TOKENS=6000
 ```
+
+
+## (Near) Future changes
+
+At the moment, only the database is running in a container. This will change in the near future, and both the loader and the query ends will be running in a dedicated containers. This simplifies both local use and possible cloud deployments.
