@@ -21,3 +21,4 @@ __pycache__/
 
 # all pdf files in data directory
 data/*.pdf
+docs/
