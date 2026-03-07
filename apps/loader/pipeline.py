@@ -40,8 +40,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def build_pg_dsn() -> str:
-    host = os.getenv("PGHOST", "localhost")
-    port = os.getenv("PGPORT", "5431")
+    host = os.getenv("PGHOST", "database")
+    port = os.getenv("PGPORT", "5432")
     database = os.getenv("PGDATABASE", "postgres")
     user = os.getenv("PGUSER", "postgres")
     password = os.getenv("PGPASSWORD", "password")

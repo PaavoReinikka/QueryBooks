@@ -18,4 +18,4 @@ RUN pip install --no-cache-dir uv \
 
 COPY . .
 
-CMD ["uv", "run", "app_query.py"]
+CMD ["uv", "run", "-m", "apps.query.app"]

@@ -230,7 +230,7 @@ def build_postgres_dsn() -> str:
         f"dbname={env_or_default('PGDATABASE', 'postgres')}",
         f"user={env_or_default('PGUSER', 'postgres')}",
         f"password={env_or_default('PGPASSWORD', 'password')}",
-        f"host={env_or_default('PGHOST', 'localhost')}",
+        f"host={env_or_default('PGHOST', 'database')}",
         f"port={env_or_default('PGPORT', '5432')}",
     ]
     sslmode = os.getenv('PGSSLMODE')

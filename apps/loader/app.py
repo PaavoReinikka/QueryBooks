@@ -239,7 +239,7 @@ with gr.Blocks(title="Knowledge Base Loader") as loader_app:
 
     gr.Markdown(
         """
-        **Azure embeddings are CLI-only.** If you need to load via Azure (for dedicated Azure-hosted databases), run `uv run pipeline.py` or the CLI with the Azure flags. The GUI always runs the medium profile via OpenAI so the experience stays simple.
+        **Azure embeddings are CLI-only.** If you need to load via Azure (for dedicated Azure-hosted databases), run the pipeline CLI inside the loader container (e.g., `docker compose run --rm loader python -m apps.loader.pipeline --medium-provider azure`). The GUI always runs the medium profile via OpenAI so the experience stays simple.
         """
     )
 

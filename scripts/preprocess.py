@@ -36,7 +36,7 @@ def extract_text_from_pdf(pdf_path: Path) -> str:
 def build_connection_string(args: argparse.Namespace) -> str:
 	pg_user = args.pg_user or os.getenv("PGUSER")
 	pg_password = args.pg_password or os.getenv("PGPASSWORD")
-	pg_host = args.pg_host or os.getenv("PGHOST", "localhost")
+	pg_host = args.pg_host or os.getenv("PGHOST", "database")
 	pg_port = str(args.pg_port or os.getenv("PGPORT", "5432"))
 	pg_database = args.pg_database or os.getenv("PGDATABASE")
 

@@ -400,8 +400,8 @@ class ChatManagerWithTools:
         self._setup_prompt()
 
     def _setup_env(self):
-        self.PGHOST = os.getenv("PGHOST", "localhost")
-        self.PGPORT = os.getenv("PGPORT")
+        self.PGHOST = os.getenv("PGHOST", "database")
+        self.PGPORT = os.getenv("PGPORT", "5432")
         self.PGUSER = os.getenv("PGUSER")
         self.PGPASSWORD = os.getenv("PGPASSWORD")
         self.PGDATABASE = os.getenv("PGDATABASE")

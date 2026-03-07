@@ -22,8 +22,8 @@ def _env_or_default(name: str, default: str) -> str:
 
 
 def _build_dsn() -> str:
-    host = _env_or_default("PGHOST", "localhost")
-    port = _env_or_default("PGPORT", "5431")
+    host = _env_or_default("PGHOST", "database")
+    port = _env_or_default("PGPORT", "5432")
     database = _env_or_default("PGDATABASE", "postgres")
     user = _env_or_default("PGUSER", "postgres")
     password = _env_or_default("PGPASSWORD", "password")
@@ -156,7 +156,14 @@ class TestHybridSearchDatabase(unittest.TestCase):
 
 if __name__ == "__main__":
     print("Running TestHybridSearchDatabase...\n")
-    print("Note: These tests require a populated database with the expected schema and functions. ")
-    print("Make sure to run the loader app to populate the database before running these tests.")
-    print("If you encounter failures, check the database connection settings and ensure the loader has been run successfully.\n\n")
+    print(
+        "Note: These tests require a populated database with the expected schema and functions. "
+    )
+    print(
+        "Use the loader UI container (`docker compose --profile ui up loader`) or `docker compose run --rm loader python -m apps.loader.pipeline` "
+        "to populate the tables before running these tests."
+    )
+    print(
+        "If you encounter failures, verify the database connection settings in `.env`/`project.env` and ensure the container writes finished successfully.\n\n"
+    )
     unittest.main(verbosity=2)

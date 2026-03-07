@@ -40,16 +40,14 @@ services:
     env_file:
       - project.env
       - .env
-    environment:
-      - PGHOST=database
-      - PGPORT=5432
+    # environment:
+    #   - PGHOST=database
+    #   - PGPORT=5432
     volumes:
       - ./apps:/workspace/apps:delegated
       - ./utils:/workspace/utils:delegated
       - ./scripts:/workspace/scripts:delegated
       - ./data:/workspace/data:delegated
-      - ./app_loader.py:/workspace/app_loader.py:ro
-      - ./pipeline.py:/workspace/pipeline.py:ro
       - *hf-cache
       # uncomment the next line to mount the entire workspace (including your host .venv)
       # - .:/workspace:delegated
@@ -67,16 +65,14 @@ services:
     env_file:
       - project.env
       - .env
-    environment:
-      - PGHOST=database
-      - PGPORT=5432
+    # environment:
+    #   - PGHOST=database
+    #   - PGPORT=5432
     volumes:
       - ./apps:/workspace/apps:delegated
       - ./utils:/workspace/utils:delegated
       - ./scripts:/workspace/scripts:delegated
       - ./data:/workspace/data:delegated
-      - ./app_query.py:/workspace/app_query.py:ro
-      - ./pipeline.py:/workspace/pipeline.py:ro
       - *hf-cache
       # uncomment the next line to mount the entire workspace (including your host .venv)
       # - .:/workspace:delegated
