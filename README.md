@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="QueryBooks Banner" width="100%">
+  <img src="assets/bannerwide.png" alt="QueryBooks Banner" width="100%">
 </p>
 
 # QueryBooks rag-application
