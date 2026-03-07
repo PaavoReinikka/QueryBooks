@@ -1,4 +1,4 @@
-# RAG-application
+# QueryBooks rag-application
 
 Two dedicated apps: a loader that chunks/passes PDFs into knowledge base (hybrid postgres) and a chat/query surface that retrieves context from the populated tables, and answers user's questions based on the source material.
 
