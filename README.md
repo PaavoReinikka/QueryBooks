@@ -4,7 +4,7 @@ Two dedicated apps: a loader that chunks/passes PDFs into knowledge base (hybrid
 
 ## Web UIs
 
-* **Loader (`app_loader.py`)** – Gradio UI mirroring `pipeline.py`’s options. Upload or point to a PDF, select mini/small/medium, tweak chunking/provider overrides, and truncate/dry-run before writing. Launch with `uv run app_loader.py`; set `PROFILE` before launching if you want a different default target table (`md` is the default profile, so the loader starts on medium unless you override it). The medium step now defaults to OpenAI embeddings (`MEDIUM_PROVIDER=openai`) and only switches to Azure when you explicitly flip the dropdown or pass `--medium-provider azure` along with the Azure endpoint/key.
+* **Loader (`app_loader.py`)** – Gradio UI mirroring `pipeline.py`’s options. Upload or point to a PDF, select mini/small/medium, tweak chunking/provider overrides, and truncate/dry-run before writing. Launch with `uv run app_loader.py`; set `PROFILE` before launching if you want a different default target table (`md` is the default profile, so the loader starts on medium unless you override it). The medium step now defaults to OpenAI embeddings (`MEDIUM_PROVIDER=openai`), which means the loader expects `OPENAI_API_KEY` to be set; switching to Azure requires explicitly changing the dropdown or passing `--medium-provider azure` along with the Azure endpoint/key.
 * **Chat (`app_query.py`)** – Tool-enabled assistant that queries the populated tables. It checks `PROFILE` (`mini`, `sm`, or `md`, default `md`) to decide which table/embedding pair to hit and reads the corresponding embedding model from `DEPLOY_MINI`, `DEPLOY_SMALL`, or `DEPLOY_MEDIUM`. The medium profile still uses whatever model is configured in `DEPLOY_MEDIUM`, so it will match the loader’s provider configuration (OpenAI by default). Run `uv run app_query.py` after loading data. To launch the UI with a specific profile, prefix the command with `PROFILE=mini uv run ...` (or `sm`/`md`).
 
 Both UIs and the CLI share the same env-loading order: `project.env`, `.env`, then `--env-file` (pipeline default is `.env`).
@@ -78,6 +78,8 @@ PGSSLMODE=disable
 
 ### Chunking and preprocessing defaults
 
+Embedding model is needed for semantic chunking. Small local (HF) models are usually sufficient for this. If for some reason you want to use API's, only azure endpoints are supported at the moment -- you need to modify the `preprocess.py` script yourself for other options -- yes, this is inconsistant with the way the query end is working (defaulting to openai for API's). This might change in the future to support opeanai as the primary API.
+
 ```env
 PDF_PATH=data/euaiact.pdf
 SOURCE_NAME=euaiact.pdf
@@ -88,14 +90,23 @@ MAX_SENTENCES=5
 
 CHUNKING_PROVIDER=local
 CHUNKING_LOCAL_MODEL=sentence-transformers/all-MiniLM-L6-v2
-CHUNKING_DEPLOYMENT=
+CHUNKING_DEPLOYMENT= #only if provider azure 
 BREAKPOINT_THRESHOLD_TYPE=percentile
 
 MAX_EMBED_TOKENS=2000
 SPLIT_OVERLAP_TOKENS=80
 ```
 
+### Defaul openai endpoint
+
+For openai endpoints (medium profiles default behavious), you need to provide the api key:
+```env
+OPENAI_API_KEY=sk-<your-openai-key>
+```
+
 ### Azure embedding overrides *(optional for medium when `MEDIUM_PROVIDER=azure`)*
+
+If you have access to azure api's (e.g., foundry deployments), you can specify that you wish to use azure by passing the provider when launcing the apps, or by setting it in the env. Then you need to also set the following vars:
 
 ```env
 AZURE_ENDPOINT=...
