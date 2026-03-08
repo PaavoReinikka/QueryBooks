@@ -91,9 +91,6 @@ PGSSLMODE=disable
 Embedding model is needed for semantic chunking. The loader UI container exposes only the local provider so the options below describe that path; Azure chunking/deployments are available only when you run the CLI inside the loader container (for example `docker compose run --rm loader python -m apps.loader.pipeline --medium-provider azure` or `docker compose run --rm loader python scripts/preprocess.py ...`) and explicitly request `--medium-provider azure` (or set `MEDIUM_PROVIDER=azure`).
 
 ```env
-PDF_PATH=data/euaiact.pdf
-SOURCE_NAME=euaiact.pdf
-
 CHUNKER=spacy
 SPACY_MODEL=en_core_web_sm
 MAX_SENTENCES=5
